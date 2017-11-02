@@ -1,3 +1,4 @@
+#define USESQL
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
@@ -26,10 +27,13 @@ namespace ProtocolGateway.Host.Common
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence;
+    using Microsoft.Azure.Devices.ProtocolGateway.SQLClient;
+
+
 
     public class Bootstrapper
     {
-        const int MqttsPort = 8883;
+        const int MqttsPort = 1883; //TODO: Move back to 8883 when enabling TLS
         const int ListenBacklogSize = 200; // connections allowed pending accept
         const int DefaultConnectionPoolSize = 400; // IoT Hub default connection pool size
         static readonly TimeSpan DefaultConnectionIdleTimeout = TimeSpan.FromSeconds(210); // IoT Hub default connection idle timeout
@@ -44,7 +48,13 @@ namespace ProtocolGateway.Host.Common
         IEventLoopGroup parentEventLoopGroup;
         IEventLoopGroup eventLoopGroup;
         IChannel serverChannel;
+
+#if USESQL
+        readonly SQLClientSettings sqlClientSettings;
+#else
         readonly IotHubClientSettings iotHubClientSettings;
+#endif
+
         readonly IMessageAddressConverter topicNameConverter;
 
         public Bootstrapper(ISettingsProvider settingsProvider, ISessionStatePersistenceProvider sessionStateManager, IQos2StatePersistenceProvider qos2StateProvider) : 
@@ -66,10 +76,17 @@ namespace ProtocolGateway.Host.Common
 
             this.settingsProvider = settingsProvider;
             this.settings = new Settings(this.settingsProvider);
+
+#if USESQL
+            this.sqlClientSettings = new SQLClientSettings(this.settingsProvider);
+            this.authProvider = new SQLDeviceIdentityProvider();
+#else            
             this.iotHubClientSettings = new IotHubClientSettings(this.settingsProvider);
+            this.authProvider = new SasTokenDeviceIdentityProvider();
+#endif          
+
             this.sessionStateManager = sessionStateManager;
             this.qos2StateProvider = qos2StateProvider;
-            this.authProvider = new SasTokenDeviceIdentityProvider();
             this.topicNameConverter = addressConverter;
         }
 
@@ -136,7 +153,11 @@ namespace ProtocolGateway.Host.Common
 
         ServerBootstrap SetupBootstrap()
         {
+#if USESQL
+            if (this.settings.DeviceReceiveAckCanTimeout && this.sqlClientSettings.MaxPendingOutboundMessages > 1)
+#else
             if (this.settings.DeviceReceiveAckCanTimeout && this.iotHubClientSettings.MaxPendingOutboundMessages > 1)
+#endif
             {
                 throw new InvalidOperationException("Cannot maintain ordering on retransmission with more than 1 allowed pending outbound message.");
             }
@@ -144,10 +165,19 @@ namespace ProtocolGateway.Host.Common
             int maxInboundMessageSize = this.settingsProvider.GetIntegerSetting("MaxInboundMessageSize", 256 * 1024);
             int connectionPoolSize = this.settingsProvider.GetIntegerSetting("IotHubClient.ConnectionPoolSize", DefaultConnectionPoolSize);
             TimeSpan connectionIdleTimeout = this.settingsProvider.GetTimeSpanSetting("IotHubClient.ConnectionIdleTimeout", DefaultConnectionIdleTimeout);
+
+
+#if USESQL
+            string strDbConnection = "database connection string"; //TODO: Implement
+            Func<IDeviceIdentity, Task<IMessagingServiceClient>> deviceClientFactory = SQLClient.PreparePoolFactory(strDbConnection, connectionPoolSize,
+                connectionIdleTimeout, sqlClientSettings, PooledByteBufferAllocator.Default); //, this.topicNameConverter);
+#else
             string connectionString = this.iotHubClientSettings.IotHubConnectionString;
 
             Func<IDeviceIdentity, Task<IMessagingServiceClient>> deviceClientFactory = IotHubClient.PreparePoolFactory(connectionString, connectionPoolSize,
                 connectionIdleTimeout, this.iotHubClientSettings, PooledByteBufferAllocator.Default, this.topicNameConverter);
+#endif
+
             MessagingBridgeFactoryFunc bridgeFactory = async deviceIdentity => new SingleClientMessagingBridge(deviceIdentity, await deviceClientFactory(deviceIdentity));
 
             return new ServerBootstrap()
@@ -158,11 +188,16 @@ namespace ProtocolGateway.Host.Common
                 .Channel<TcpServerSocketChannel>()
                 .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
                 {
-                    channel.Pipeline.AddLast(TlsHandler.Server(this.tlsCertificate));
+                    // TODO: Add back when enabling TLS
+                    //channel.Pipeline.AddLast(TlsHandler.Server(this.tlsCertificate));
                     channel.Pipeline.AddLast(
                         MqttEncoder.Instance,
                         new MqttDecoder(true, maxInboundMessageSize),
+#if USESQL
+                        new MqttAdapterSQLServer(
+#else
                         new MqttAdapter(
+#endif
                             this.settings,
                             this.sessionStateManager,
                             this.authProvider,

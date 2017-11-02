@@ -12,6 +12,7 @@
     <Version>1.0.0.0</Version>
     <Company>Microsoft</Company>
     <Copyright>Copyright © Microsoft 2015</Copyright>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
   
   <ItemGroup>

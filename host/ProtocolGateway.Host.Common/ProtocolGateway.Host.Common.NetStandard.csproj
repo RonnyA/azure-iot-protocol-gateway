@@ -38,6 +38,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\ProtocolGateway.Core\ProtocolGateway.Core.NetStandard.csproj" />
     <ProjectReference Include="..\..\src\ProtocolGateway.IotHubClient\ProtocolGateway.IotHubClient.NetStandard.csproj" />
+    <ProjectReference Include="..\..\src\ProtocolGateway.SQLClient\ProtocolGateway.SQLClient.NetStandard.csproj" />
   </ItemGroup>
 
 </Project>
