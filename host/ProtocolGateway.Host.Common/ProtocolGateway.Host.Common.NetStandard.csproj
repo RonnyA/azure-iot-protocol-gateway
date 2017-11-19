@@ -1,11 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.3</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <PackageId>Microsoft.Azure.Devices.ProtocolGateway.Host.Common</PackageId>
     <Description>Microsoft.Azure.Devices.ProtocolGateway.Host.Common</Description>
     <OutputType>Library</OutputType>
-    <NetStandardImplicitPackageVersion Condition=" '$(TargetFramework)' == 'netstandard1.3' ">1.6.1</NetStandardImplicitPackageVersion>
     <AssemblyName>ProtocolGateway.Host.Common</AssemblyName>
     <RootNamespace>ProtocolGateway.Host.Common</RootNamespace>
     <Version>1.0.0.0</Version>
@@ -14,7 +13,7 @@
     <Copyright>Copyright ©  2015</Copyright>
   </PropertyGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.3' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <Compile Remove="MqttPacketPayloadCompressionHandler.cs" />
   </ItemGroup>
 
@@ -23,12 +22,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DotNetty.Buffers" Version="0.4.6" />
-    <PackageReference Include="DotNetty.Codecs" Version="0.4.6" />
-    <PackageReference Include="DotNetty.Codecs.Mqtt" Version="0.4.6" />
-    <PackageReference Include="DotNetty.Common" Version="0.4.6" />
-    <PackageReference Include="DotNetty.Handlers" Version="0.4.6" />
-    <PackageReference Include="DotNetty.Transport" Version="0.4.6" />
+    <PackageReference Include="DotNetty.Buffers" Version="0.4.7" />
+    <PackageReference Include="DotNetty.Codecs" Version="0.4.7" />
+    <PackageReference Include="DotNetty.Codecs.Mqtt" Version="0.4.7" />
+    <PackageReference Include="DotNetty.Common" Version="0.4.7" />
+    <PackageReference Include="DotNetty.Handlers" Version="0.4.7" />
+    <PackageReference Include="DotNetty.Transport" Version="0.4.7" />
   </ItemGroup>
 
   <ItemGroup>

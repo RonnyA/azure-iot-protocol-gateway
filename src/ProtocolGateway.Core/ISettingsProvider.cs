@@ -6,7 +6,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway
     using System;
     using System.Diagnostics;
     using System.Globalization;
-#if !NETSTANDARD1_3
+#if !NETSTANDARD2_0
     using System.Configuration;
 #endif
 
@@ -30,7 +30,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway
                 return defaultValue;
             }
 
-#if NETSTANDARD1_3  
+#if NETSTANDARD2_0  
             throw new ConfigurationErrorsException(name);
 #else
             Trace.TraceError("Setting could not be found: " + name);
@@ -51,7 +51,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway
                 return defaultValue.Value;
             }
 
-#if NETSTANDARD1_3
+#if NETSTANDARD2_0
             
             throw new ConfigurationErrorsException(name);
 #else
@@ -85,7 +85,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway
                 return defaultValue.Value;
             }
 
-#if NETSTANDARD1_3
+#if NETSTANDARD2_0
             
             throw new ConfigurationErrorsException(name);
 #else
@@ -118,7 +118,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway
             {
                 return defaultValue.Value;
             }
-#if NETSTANDARD1_3
+#if NETSTANDARD2_0
             
             throw new ConfigurationErrorsException(name);
 #else

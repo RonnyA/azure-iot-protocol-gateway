@@ -9,7 +9,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway
 
         public AppConfigSettingsProvider()
         {
-#if NETSTANDARD1_3
+#if NETSTANDARD2_0
             this.configStrategy = new ConfigurationExtensionReader();
 #else
             this.configStrategy = new ConfigManagerReader();

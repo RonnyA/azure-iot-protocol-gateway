@@ -10,7 +10,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing
     using System.Linq;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
-#if NETSTANDARD1_3
+#if NETSTANDARD2_0
     using Microsoft.Extensions.Configuration;
 
 #else
@@ -20,7 +20,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing
     public sealed class ConfigurableMessageAddressConverter : IMessageAddressConverter
     {
         static readonly Uri BaseUri = new Uri("http://x/", UriKind.Absolute);
-#if NETSTANDARD1_3
+#if NETSTANDARD2_0
         IList<UriPathTemplate> topicTemplateTable;
         static readonly IConfigurationRoot configurationRoot = new ConfigurationBuilder().AddJsonFile("appSettings.json").Build();
 #else
@@ -53,7 +53,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing
         {
             Contract.Requires(!string.IsNullOrEmpty(configurationSectionName));
 
-#if NETSTANDARD1_3
+#if NETSTANDARD2_0
             var configuration = new MessageAddressConversionConfiguration();
             configurationRoot.GetSection(configurationSectionName).Bind(configuration);
 #else
@@ -79,7 +79,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing
         {
             Contract.Requires(configuration != null);
 
-#if NETSTANDARD1_3
+#if NETSTANDARD2_0
             this.topicTemplateTable = (from template in configuration.InboundTemplates
                                        select new UriPathTemplate(template)).ToList();
 #else
@@ -108,7 +108,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing
 
         public bool TryParseAddressIntoMessageProperties(string address, IMessage message)
         {
-#if NETSTANDARD1_3
+#if NETSTANDARD2_0
             return TryParseAddressIntoMessagePropertiesWithRegex(address, message);
 #else
             return TryParseAddressIntoMessagePropertiesDefault(address, message);
@@ -116,7 +116,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing
         }
 
 
-#if NETSTANDARD1_3
+#if NETSTANDARD2_0
 
         private bool TryParseAddressIntoMessagePropertiesWithRegex(string address, IMessage message)
         {

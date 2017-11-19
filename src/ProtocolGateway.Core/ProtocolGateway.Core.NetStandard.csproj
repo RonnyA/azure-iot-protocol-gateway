@@ -2,12 +2,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
  
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.3;net451</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net451</TargetFrameworks>
     <PackageId>Microsoft.Azure.Devices.ProtocolGateway.Core</PackageId>
     <Title>Microsoft Azure IoT protocol gateway framework - Core</Title>
     <Description>This library contains the core components of Azure IoT protocol gateway that enables protocol translation for Azure IoT Hub.</Description>
     <OutputType>Library</OutputType>
-    <NetStandardImplicitPackageVersion Condition=" '$(TargetFramework)' == 'netstandard1.3' ">1.6.1</NetStandardImplicitPackageVersion>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <AssemblyName>Microsoft.Azure.Devices.ProtocolGateway.Core</AssemblyName>
     <RootNamespace>Microsoft.Azure.Devices.ProtocolGateway.Core</RootNamespace>
@@ -22,7 +21,7 @@
     <PackageLicenseUrl>http://go.microsoft.com/fwlink/?LinkId=536623</PackageLicenseUrl>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard1.3'">
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <AssemblyTitle>Microsoft.Azure.Devices.ProtocolGateway.Core</AssemblyTitle>
   </PropertyGroup>
 
@@ -30,7 +29,7 @@
     <AssemblyTitle>Microsoft.Azure.Devices.ProtocolGateway.Core</AssemblyTitle>
   </PropertyGroup>
   
-  <ItemGroup Condition="'$(TargetFramework)'=='netstandard1.3'">
+  <ItemGroup Condition="'$(TargetFramework)'=='netstandard2.0'">
     <Compile Remove="Instrumentation\PerformanceCounterCategoryInfo.cs" Link="Instrumentation\PerformanceCounterCategoryInfo.cs" />
     <Compile Remove="Instrumentation\WindowsPerformanceCounterManager.cs" Link="Instrumentation\WindowsPerformanceCounterManager.cs" />
     <Compile Remove="ConfigManagerReader.cs" Link="ConfigManagerReader.cs" />
@@ -49,17 +48,16 @@
   </ItemGroup>
 
    <ItemGroup>
-     <PackageReference Include="DotNetty.Codecs.Mqtt" Version="0.4.6" />
-     <PackageReference Include="DotNetty.Handlers" version="0.4.6" />
+     <PackageReference Include="DotNetty.Codecs.Mqtt" Version="0.4.7" />
+     <PackageReference Include="DotNetty.Handlers" version="0.4.7" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)'=='net451'">
     <Reference Include="System.Configuration" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)'=='netstandard1.3'">
+  <ItemGroup Condition="'$(TargetFramework)'=='netstandard2.0'">
     <PackageReference Include="Microsoft.Extensions.Configuration" version="1.1.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="1.1.1" />
   </ItemGroup>
-
 </Project>
