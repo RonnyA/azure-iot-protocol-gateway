@@ -16,6 +16,7 @@ _ReSharper.*
 nuget.exe
 *net45.csproj
 *net451.csproj
+*net461.csproj
 *k10.csproj
 *.psess
 *.vsp

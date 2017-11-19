@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net451</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
     <PackageId>Microsoft.Azure.Devices.ProtocolGateway.StorageClient</PackageId>
     <Title>Microsoft Azure IoT protocol gateway framework - IoT Hub client</Title>
     <Description>This library contains Azure IoT Hub specific components of Azure IoT protocol gateway that enables protocol translation for Storage systems.</Description>
@@ -23,7 +23,7 @@
     <AssemblyTitle>Microsoft.Azure.Devices.ProtocolGateway.StorageClient</AssemblyTitle>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net451'">
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net461'">
     <AssemblyTitle>Microsoft.Azure.Devices.ProtocolGateway.StorageClient</AssemblyTitle>
   </PropertyGroup>
   
@@ -36,7 +36,7 @@
     <PackageReference Include="System.Diagnostics.Contracts" Version="4.3.0" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)'=='net451'">
+  <ItemGroup Condition="'$(TargetFramework)'=='net461'">
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.Configuration" />
   </ItemGroup>

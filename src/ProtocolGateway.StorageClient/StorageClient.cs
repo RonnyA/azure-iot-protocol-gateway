@@ -17,6 +17,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.StorageClient
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
     using System.Text;
+    using global::ProtocolGateway.StorageClient.Implementation;
 
     public class StorageClient : IMessagingServiceClient
     {        
@@ -25,14 +26,17 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.StorageClient
         readonly IByteBufferAllocator allocator;
         // readonly IMessageAddressConverter messageAddressConverter;
         IMessagingChannel<IMessage> messagingChannel;
+        IStorageProvider storageProvider;
 
-        StorageClient(Object deviceClient, string deviceId, StorageClientSettings settings, IByteBufferAllocator allocator) //, IMessageAddressConverter messageAddressConverter)
+        StorageClient(IStorageProvider storageProvider, string deviceId, StorageClientSettings settings, IByteBufferAllocator allocator) //, IMessageAddressConverter messageAddressConverter)
         {
             //this.StorageClient = deviceClient;
             this.deviceId = deviceId;
             this.settings = settings;
             this.allocator = allocator;
-            // this.messageAddressConverter = messageAddressConverter;            
+            // this.messageAddressConverter = messageAddressConverter;           
+            this.storageProvider = storageProvider;
+
         }
 
         public static async Task<IMessagingServiceClient> CreateFromConnectionStringAsync(string deviceId, string connectionString,
@@ -41,7 +45,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.StorageClient
             //int maxPendingOutboundMessages = settings.MaxPendingOutboundMessages;
             //webSocketSettings.PrefetchCount = tcpSettings.PrefetchCount = (uint)maxPendingOutboundMessages;
 
-            Object client = null;
+
+            IStorageProvider storageProvider = null;
 
             if (connectionPoolSize > 0)
             {
@@ -55,14 +60,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.StorageClient
                 //    amqpConnectionPoolSettings.ConnectionIdleTimeout = connectionIdleTimeout.Value;
                 //}
             }
-            // client = new SQlServerConnection (connectionstring,...)
-            //    await client.OpenAsync();
+            storageProvider = new SQLStorageProvider(connectionString);
+            await storageProvider.OpenAsync();
             //catch (IotHubException ex)
             //{
             //    throw ComposeSQLCommunicationException(ex);
             //}
 
-            return new StorageClient(client, deviceId, settings, allocator); //, messageAddressConverter);
+            return new StorageClient(storageProvider, deviceId, settings, allocator); //, messageAddressConverter);
         }
 
         /// <summary>
