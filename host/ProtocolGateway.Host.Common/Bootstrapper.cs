@@ -1,4 +1,4 @@
-#define USESQL
+#define USE_STORAGE_GATEWAY
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
@@ -27,7 +27,7 @@ namespace ProtocolGateway.Host.Common
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence;
-    using Microsoft.Azure.Devices.ProtocolGateway.SQLClient;
+    using Microsoft.Azure.Devices.ProtocolGateway.StorageClient;
 
 
 
@@ -49,8 +49,8 @@ namespace ProtocolGateway.Host.Common
         IEventLoopGroup eventLoopGroup;
         IChannel serverChannel;
 
-#if USESQL
-        readonly SQLClientSettings sqlClientSettings;
+#if USE_STORAGE_GATEWAY
+        readonly StorageClientSettings StorageClientSettings;
 #else
         readonly IotHubClientSettings iotHubClientSettings;
 #endif
@@ -77,9 +77,9 @@ namespace ProtocolGateway.Host.Common
             this.settingsProvider = settingsProvider;
             this.settings = new Settings(this.settingsProvider);
 
-#if USESQL
-            this.sqlClientSettings = new SQLClientSettings(this.settingsProvider);
-            this.authProvider = new SQLDeviceIdentityProvider();
+#if USE_STORAGE_GATEWAY
+            this.StorageClientSettings = new StorageClientSettings(this.settingsProvider);
+            this.authProvider = new StorageDeviceIdentityProvider();
 #else            
             this.iotHubClientSettings = new IotHubClientSettings(this.settingsProvider);
             this.authProvider = new SasTokenDeviceIdentityProvider();
@@ -153,8 +153,8 @@ namespace ProtocolGateway.Host.Common
 
         ServerBootstrap SetupBootstrap()
         {
-#if USESQL
-            if (this.settings.DeviceReceiveAckCanTimeout && this.sqlClientSettings.MaxPendingOutboundMessages > 1)
+#if USE_STORAGE_GATEWAY
+            if (this.settings.DeviceReceiveAckCanTimeout && this.StorageClientSettings.MaxPendingOutboundMessages > 1)
 #else
             if (this.settings.DeviceReceiveAckCanTimeout && this.iotHubClientSettings.MaxPendingOutboundMessages > 1)
 #endif
@@ -167,10 +167,10 @@ namespace ProtocolGateway.Host.Common
             TimeSpan connectionIdleTimeout = this.settingsProvider.GetTimeSpanSetting("IotHubClient.ConnectionIdleTimeout", DefaultConnectionIdleTimeout);
 
 
-#if USESQL
+#if USE_STORAGE_GATEWAY
             string strDbConnection = "database connection string"; //TODO: Implement
-            Func<IDeviceIdentity, Task<IMessagingServiceClient>> deviceClientFactory = SQLClient.PreparePoolFactory(strDbConnection, connectionPoolSize,
-                connectionIdleTimeout, sqlClientSettings, PooledByteBufferAllocator.Default); //, this.topicNameConverter);
+            Func<IDeviceIdentity, Task<IMessagingServiceClient>> deviceClientFactory = StorageClient.PreparePoolFactory(strDbConnection, connectionPoolSize,
+                connectionIdleTimeout, StorageClientSettings, PooledByteBufferAllocator.Default); //, this.topicNameConverter);
 #else
             string connectionString = this.iotHubClientSettings.IotHubConnectionString;
 
@@ -193,8 +193,8 @@ namespace ProtocolGateway.Host.Common
                     channel.Pipeline.AddLast(
                         MqttEncoder.Instance,
                         new MqttDecoder(true, maxInboundMessageSize),
-#if USESQL
-                        new MqttAdapterSQLServer(
+#if USE_STORAGE_GATEWAY
+                        new MqttAdapterStorageGateway(
 #else
                         new MqttAdapter(
 #endif

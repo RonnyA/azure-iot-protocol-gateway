@@ -1,12 +1,12 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Microsoft.Azure.Devices.ProtocolGateway.SQLClient
+namespace Microsoft.Azure.Devices.ProtocolGateway.StorageClient
 {
     using System;
     using DotNetty.Codecs.Mqtt.Packets;
 
-    public class SQLClientSettings
+    public class StorageClientSettings
     {
         const string SettingPrefix = "IotHubClient.";
         const string IotHubConnectionStringSetting = SettingPrefix + "ConnectionString"; // connection string to IoT Hub. Credentials can be overriden by device specific credentials coming from auth provider
@@ -21,7 +21,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.SQLClient
         const int MaxPendingOutboundMessagesDefaultValue = 1;
         const int NoMaxOutboundRetransmissionCountValue = -1;
 
-        public SQLClientSettings(ISettingsProvider settingsProvider)
+        public StorageClientSettings(ISettingsProvider settingsProvider)
         {
             int inboundMessages;
             if (!settingsProvider.TryGetIntegerSetting(MaxPendingInboundMessagesSetting, out inboundMessages) || inboundMessages <= 0)

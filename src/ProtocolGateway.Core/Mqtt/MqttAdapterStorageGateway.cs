@@ -19,7 +19,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence;
 
-    public sealed class MqttAdapterSQLServer : ChannelHandlerAdapter, IMessagingChannel<MessageWithFeedback>
+    public sealed class MqttAdapterStorageGateway : ChannelHandlerAdapter, IMessagingChannel<MessageWithFeedback>
     {
         public const string OperationScopeExceptionDataKey = "PG.MqttAdapter.Scope.Operation";
         public const string ConnectionScopeExceptionDataKey = "PG.MqttAdapter.Scope.Connection";
@@ -61,7 +61,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         PublishPacket willPacket;
         string ChannelId => this.capturedContext.Channel.Id.ToString();
 
-        public MqttAdapterSQLServer(
+        public MqttAdapterStorageGateway(
             Settings settings,
             ISessionStatePersistenceProvider sessionStateManager,
             IDeviceIdentityProvider authProvider,
@@ -793,7 +793,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         #region CONNECT handling and lifecycle management
 
         /// <summary>
-        ///     Performs complete initialization of <see cref="MqttAdapterSQLServer" /> based on received CONNECT packet.
+        ///     Performs complete initialization of <see cref="MqttAdapterStorageGateway" /> based on received CONNECT packet.
         /// </summary>
         /// <param name="context"><see cref="IChannelHandlerContext" /> instance.</param>
         /// <param name="packet">CONNECT packet.</param>
@@ -966,7 +966,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         static void CheckConnectionTimeout(object state)
         {
             var context = (IChannelHandlerContext)state;
-            var handler = (MqttAdapterSQLServer)context.Handler;
+            var handler = (MqttAdapterStorageGateway)context.Handler;
             if (handler.IsInState(StateFlags.WaitingForConnect))
             {
                 ShutdownOnError(context, string.Empty, new ProtocolGatewayException(ErrorCode.ConnectionTimedOut, "Connection timed out on waiting for CONNECT packet from client."));
@@ -976,7 +976,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         static void CheckKeepAlive(object ctx)
         {
             var context = (IChannelHandlerContext)ctx;
-            var self = (MqttAdapterSQLServer)context.Handler;
+            var self = (MqttAdapterStorageGateway)context.Handler;
             TimeSpan elapsedSinceLastActive = DateTime.UtcNow - self.lastClientActivityTime;
             if (elapsedSinceLastActive > self.keepAliveTimeout)
             {
@@ -1003,7 +1003,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 error.Data[ConnectionScopeExceptionDataKey] = context.Channel.Id.ToString();
             }
 
-            var self = (MqttAdapterSQLServer)context.Handler;
+            var self = (MqttAdapterStorageGateway)context.Handler;
             if (!self.IsInState(StateFlags.Closed))
             {
                 PerformanceCounters.ConnectionFailedOperationalPerSecond.Increment();
@@ -1147,7 +1147,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         {
             return (task, state) =>
             {
-                var self = (MqttAdapterSQLServer)state;
+                var self = (MqttAdapterStorageGateway)state;
                 // ReSharper disable once PossibleNullReferenceException // called in case of fault only, so task.Exception is never null
                 var ex = task.Exception.InnerException as ChannelMessageProcessingException;
                 if (ex != null)

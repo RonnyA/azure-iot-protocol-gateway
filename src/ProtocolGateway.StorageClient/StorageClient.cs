@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Microsoft.Azure.Devices.ProtocolGateway.SQLClient
+namespace Microsoft.Azure.Devices.ProtocolGateway.StorageClient
 {
     using System;
     using System.Diagnostics.Contracts;
@@ -18,17 +18,17 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.SQLClient
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
     using System.Text;
 
-    public class SQLClient : IMessagingServiceClient
+    public class StorageClient : IMessagingServiceClient
     {        
         readonly string deviceId;
-        readonly SQLClientSettings settings;
+        readonly StorageClientSettings settings;
         readonly IByteBufferAllocator allocator;
         // readonly IMessageAddressConverter messageAddressConverter;
         IMessagingChannel<IMessage> messagingChannel;
 
-        SQLClient(Object deviceClient, string deviceId, SQLClientSettings settings, IByteBufferAllocator allocator) //, IMessageAddressConverter messageAddressConverter)
+        StorageClient(Object deviceClient, string deviceId, StorageClientSettings settings, IByteBufferAllocator allocator) //, IMessageAddressConverter messageAddressConverter)
         {
-            //this.sqlclient = deviceClient;
+            //this.StorageClient = deviceClient;
             this.deviceId = deviceId;
             this.settings = settings;
             this.allocator = allocator;
@@ -36,7 +36,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.SQLClient
         }
 
         public static async Task<IMessagingServiceClient> CreateFromConnectionStringAsync(string deviceId, string connectionString,
-            int connectionPoolSize, TimeSpan? connectionIdleTimeout, SQLClientSettings settings, IByteBufferAllocator allocator) //, IMessageAddressConverter messageAddressConverter)
+            int connectionPoolSize, TimeSpan? connectionIdleTimeout, StorageClientSettings settings, IByteBufferAllocator allocator) //, IMessageAddressConverter messageAddressConverter)
         {
             //int maxPendingOutboundMessages = settings.MaxPendingOutboundMessages;
             //webSocketSettings.PrefetchCount = tcpSettings.PrefetchCount = (uint)maxPendingOutboundMessages;
@@ -62,11 +62,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.SQLClient
             //    throw ComposeSQLCommunicationException(ex);
             //}
 
-            return new SQLClient(client, deviceId, settings, allocator); //, messageAddressConverter);
+            return new StorageClient(client, deviceId, settings, allocator); //, messageAddressConverter);
         }
 
         /// <summary>
-        /// Function to initiiate new SQL processing class pr MQTT device connected
+        /// Function to initiate new Storahe processing class pr MQTT device connected
         /// </summary>
         /// <param name="baseConnectionString"></param>
         /// <param name="connectionPoolSize"></param>
@@ -76,13 +76,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.SQLClient
         /// <param name="messageAddressConverter"></param>
         /// <returns></returns>
         public static Func<IDeviceIdentity, Task<IMessagingServiceClient>> PreparePoolFactory(string baseConnectionString, int connectionPoolSize,
-            TimeSpan? connectionIdleTimeout, SQLClientSettings settings, IByteBufferAllocator allocator) //, IMessageAddressConverter messageAddressConverter)
+            TimeSpan? connectionIdleTimeout, StorageClientSettings settings, IByteBufferAllocator allocator) //, IMessageAddressConverter messageAddressConverter)
         {
             Func<IDeviceIdentity, Task<IMessagingServiceClient>> mqttCommunicatorFactory = deviceIdentity =>
             {
                 string connectionString = "";
-                // SQL Server connection string = ? baseConnectionString);
-                var identity = (SQLDeviceIdentity)deviceIdentity;
+                // Storage connection string = ? baseConnectionString);
+                var identity = (StorageDeviceIdentity)deviceIdentity;
 
                 return CreateFromConnectionStringAsync(identity.Id, connectionString, connectionPoolSize, connectionIdleTimeout, settings, allocator); //, messageAddressConverter);
             };
@@ -93,7 +93,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.SQLClient
 
         public IMessage CreateMessage(string address, IByteBuffer payload)
         {
-            var message = new SQLClientMessage(new Message(payload.IsReadable() ? new ReadOnlyByteBufferStream(payload, false) : null), payload);
+            var message = new StorageClientMessage(new Message(payload.IsReadable() ? new ReadOnlyByteBufferStream(payload, false) : null), payload);
             message.Address = address;
             return message;
         }
@@ -110,7 +110,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.SQLClient
 
         public async Task SendAsync(IMessage message)
         {
-            var clientMessage = (SQLClientMessage)message;
+            var clientMessage = (StorageClientMessage)message;
             try
             {
                 string address = message.Address;
@@ -141,13 +141,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.SQLClient
                 Message iotHubMessage = clientMessage.ToMessage();
 
                 //await this.deviceClient.SendEventAsync(iotHubMessage);
-                //await insert message in SQL table
+                //await insert message in storage (SQL table, tablestore,++)
                 
 
             }
             catch (IotHubException ex)
             {
-                throw ComposeSQLCommunicationException(ex);
+                throw ComposeStorageCommunicationException(ex);
             }
             finally
             {
@@ -169,7 +169,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.SQLClient
             {
                 while (true)
                 {
-                    //message = await sql servere lookup messge -this.deviceClient.ReceiveAsync(TimeSpan.MaxValue);
+                    //message = await storage lookup messge -this.deviceClient.ReceiveAsync(TimeSpan.MaxValue);
                     //message = await this.deviceClient.ReceiveAsync(TimeSpan.MaxValue);                    
 
                     if (cnt > 0)
@@ -212,7 +212,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.SQLClient
                         Contract.Assert(messagePayload.ReadableBytes == length);
                     }
 
-                    var msg = new SQLClientMessage(message, messagePayload);
+                    var msg = new StorageClientMessage(message, messagePayload);
                     msg.Properties[TemplateParameters.DeviceIdTemplateParam] = this.deviceId;
                     string address = "";
                     //if (!this.messageAddressConverter.TryDeriveAddress(msg, out address))
@@ -257,7 +257,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.SQLClient
             }
             catch (IotHubException ex)
             {
-                throw ComposeSQLCommunicationException(ex);
+                throw ComposeStorageCommunicationException(ex);
             }
         }
 
@@ -270,7 +270,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.SQLClient
             }
             catch (IotHubException ex)
             {
-                throw ComposeSQLCommunicationException(ex);
+                throw ComposeStorageCommunicationException(ex);
             }
         }
 
@@ -283,7 +283,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.SQLClient
             }
             catch (IotHubException ex)
             {
-                throw ComposeSQLCommunicationException(ex);
+                throw ComposeStorageCommunicationException(ex);
             }
         }
 
@@ -296,11 +296,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.SQLClient
             }
             catch (IotHubException ex)
             {
-                throw ComposeSQLCommunicationException(ex);
+                throw ComposeStorageCommunicationException(ex);
             }
         }
 
-        //internal static IAuthenticationMethod DeriveAuthenticationMethod(IAuthenticationMethod currentAuthenticationMethod, SQLDeviceIdentity deviceIdentity)
+        //internal static IAuthenticationMethod DeriveAuthenticationMethod(IAuthenticationMethod currentAuthenticationMethod, StorageDeviceIdentity deviceIdentity)
         //{
         //    switch (deviceIdentity.Scope)
         //    {
@@ -332,7 +332,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.SQLClient
         //    }
         //}
 
-        static MessagingException ComposeSQLCommunicationException(IotHubException ex)
+        static MessagingException ComposeStorageCommunicationException(IotHubException ex)
         {
             return new MessagingException(ex.Message, ex.InnerException, ex.IsTransient, ex.TrackingId);
         }

@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtocolGateway.Host.Consol
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtocolGateway.Client.NetStandard", "test\ProtocolGateway.Client.NetStandard\ProtocolGateway.Client.NetStandard.csproj", "{C4303641-E19E-4DE3-BF29-9AA002090E30}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtocolGateway.SQLClient.NetStandard", "src\ProtocolGateway.SQLClient\ProtocolGateway.SQLClient.NetStandard.csproj", "{1DB2B8D2-9BED-4C36-A938-78C454CE9830}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtocolGateway.StorageClient.NetStandard", "src\ProtocolGateway.StorageClient\ProtocolGateway.StorageClient.NetStandard.csproj", "{1DB2B8D2-9BED-4C36-A938-78C454CE9830}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

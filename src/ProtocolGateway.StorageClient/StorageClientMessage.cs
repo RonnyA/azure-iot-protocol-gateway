@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Microsoft.Azure.Devices.ProtocolGateway.SQLClient
+namespace Microsoft.Azure.Devices.ProtocolGateway.StorageClient
 {
     using System;
     using System.Collections.Generic;
@@ -10,11 +10,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.SQLClient
     using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
 
-    public sealed class SQLClientMessage : IMessage
+    public sealed class StorageClientMessage : IMessage
     {
         readonly Message message;
 
-        public SQLClientMessage(Message message, IByteBuffer payload)
+        public StorageClientMessage(Message message, IByteBuffer payload)
         {
             this.message = message;
             this.Payload = payload;
