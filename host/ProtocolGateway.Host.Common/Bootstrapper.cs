@@ -33,7 +33,7 @@ namespace ProtocolGateway.Host.Common
 
     public class Bootstrapper
     {
-        const int MqttsPort = 1883; //TODO: Move back to 8883 when enabling TLS
+        const int MqttsPort = 18883; //TODO: Move back to 8883 when enabling TLS
         const int ListenBacklogSize = 200; // connections allowed pending accept
         const int DefaultConnectionPoolSize = 400; // IoT Hub default connection pool size
         static readonly TimeSpan DefaultConnectionIdleTimeout = TimeSpan.FromSeconds(210); // IoT Hub default connection idle timeout
@@ -170,7 +170,7 @@ namespace ProtocolGateway.Host.Common
 #if USE_STORAGE_GATEWAY
             string strDbConnection = "database connection string"; //TODO: Implement
             Func<IDeviceIdentity, Task<IMessagingServiceClient>> deviceClientFactory = StorageClient.PreparePoolFactory(strDbConnection, connectionPoolSize,
-                connectionIdleTimeout, StorageClientSettings, PooledByteBufferAllocator.Default); //, this.topicNameConverter);
+                connectionIdleTimeout, StorageClientSettings, PooledByteBufferAllocator.Default,this.topicNameConverter);
 #else
             string connectionString = this.iotHubClientSettings.IotHubConnectionString;
 

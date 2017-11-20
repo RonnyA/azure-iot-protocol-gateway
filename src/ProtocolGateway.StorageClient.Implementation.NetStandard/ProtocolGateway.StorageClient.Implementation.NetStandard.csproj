@@ -28,6 +28,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer">
       <Version>2.0.1</Version>
     </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="2.0.1" />
   </ItemGroup>
 
 </Project>

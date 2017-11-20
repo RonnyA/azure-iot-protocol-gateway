@@ -6,6 +6,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.StorageClient.Implementation.M
     public class Device
     {
         public int ID { get; set; }
+        public string DeviceID { get; set; }
         public string UserName { get; set; }
         public string Password { get; set; }
     }

@@ -18,35 +18,42 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.StorageClient
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
     using System.Text;
     using global::ProtocolGateway.StorageClient.Implementation;
+    using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing;
+    using Microsoft.Azure.Devices.ProtocolGateway.StorageClient.Implementation.Data;
 
     public class StorageClient : IMessagingServiceClient
     {        
         readonly string deviceId;
         readonly StorageClientSettings settings;
         readonly IByteBufferAllocator allocator;
-        // readonly IMessageAddressConverter messageAddressConverter;
+        readonly IMessageAddressConverter messageAddressConverter;
         IMessagingChannel<IMessage> messagingChannel;
         IStorageProvider storageProvider;
 
-        StorageClient(IStorageProvider storageProvider, string deviceId, StorageClientSettings settings, IByteBufferAllocator allocator) //, IMessageAddressConverter messageAddressConverter)
+        StorageClient(IStorageProvider storageProvider, string deviceId, StorageClientSettings settings, IByteBufferAllocator allocator, IMessageAddressConverter messageAddressConverter)
         {
             //this.StorageClient = deviceClient;
             this.deviceId = deviceId;
             this.settings = settings;
             this.allocator = allocator;
-            // this.messageAddressConverter = messageAddressConverter;           
+            this.messageAddressConverter = messageAddressConverter;           
             this.storageProvider = storageProvider;
 
         }
 
         public static async Task<IMessagingServiceClient> CreateFromConnectionStringAsync(string deviceId, string connectionString,
-            int connectionPoolSize, TimeSpan? connectionIdleTimeout, StorageClientSettings settings, IByteBufferAllocator allocator) //, IMessageAddressConverter messageAddressConverter)
+            int connectionPoolSize, TimeSpan? connectionIdleTimeout, StorageClientSettings settings, IByteBufferAllocator allocator, IMessageAddressConverter messageAddressConverter)
         {
             //int maxPendingOutboundMessages = settings.MaxPendingOutboundMessages;
             //webSocketSettings.PrefetchCount = tcpSettings.PrefetchCount = (uint)maxPendingOutboundMessages;
 
 
             IStorageProvider storageProvider = null;
+
+            //DEBUG
+            connectionString = DeviceContext.DEFAULT_DB_CONNECTION; 
+            
+            //DEBUG
 
             if (connectionPoolSize > 0)
             {
@@ -60,14 +67,17 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.StorageClient
                 //    amqpConnectionPoolSettings.ConnectionIdleTimeout = connectionIdleTimeout.Value;
                 //}
             }
-            storageProvider = new SQLStorageProvider(connectionString);
-            await storageProvider.OpenAsync();
-            //catch (IotHubException ex)
-            //{
-            //    throw ComposeSQLCommunicationException(ex);
-            //}
+            storageProvider = new SQLStorageProvider(connectionString,deviceId);
+            try
+            {
+                await storageProvider.OpenAsync();
+            }            
+            catch (IotHubException ex)
+            {
+                throw ComposeStorageCommunicationException(ex);
+            }
 
-            return new StorageClient(storageProvider, deviceId, settings, allocator); //, messageAddressConverter);
+            return new StorageClient(storageProvider, deviceId, settings, allocator, messageAddressConverter);
         }
 
         /// <summary>
@@ -81,7 +91,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.StorageClient
         /// <param name="messageAddressConverter"></param>
         /// <returns></returns>
         public static Func<IDeviceIdentity, Task<IMessagingServiceClient>> PreparePoolFactory(string baseConnectionString, int connectionPoolSize,
-            TimeSpan? connectionIdleTimeout, StorageClientSettings settings, IByteBufferAllocator allocator) //, IMessageAddressConverter messageAddressConverter)
+            TimeSpan? connectionIdleTimeout, StorageClientSettings settings, IByteBufferAllocator allocator, IMessageAddressConverter messageAddressConverter)
         {
             Func<IDeviceIdentity, Task<IMessagingServiceClient>> mqttCommunicatorFactory = deviceIdentity =>
             {
@@ -89,7 +99,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.StorageClient
                 // Storage connection string = ? baseConnectionString);
                 var identity = (StorageDeviceIdentity)deviceIdentity;
 
-                return CreateFromConnectionStringAsync(identity.Id, connectionString, connectionPoolSize, connectionIdleTimeout, settings, allocator); //, messageAddressConverter);
+                return CreateFromConnectionStringAsync(identity.Id, connectionString, connectionPoolSize, connectionIdleTimeout, settings, allocator, messageAddressConverter);
             };
             return mqttCommunicatorFactory;
         }
@@ -133,24 +143,33 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.StorageClient
                 //    }
                 //}
                 //else
+                //{
+                //    if (!this.settings.PassThroughUnmatchedMessages)
+                //    {
+                //        throw new InvalidOperationException($"Topic name `{address}` could not be matched against any of the configured routes.");
+                //    }
+
+                //    CommonEventSource.Log.Warning("Topic name could not be matched against any of the configured routes. Falling back to default telemetry settings.", address);
+                //    message.Properties[this.settings.ServicePropertyPrefix + MessagePropertyNames.Unmatched] = bool.TrueString;
+                //    message.Properties[this.settings.ServicePropertyPrefix + MessagePropertyNames.Subject] = address;
+                //}
+                //Message iotHubMessage = clientMessage.ToMessage();
+                if ((clientMessage.Payload.ReadableBytes > 0) && clientMessage.Payload.IsReadable())
                 {
-                    //if (!this.settings.PassThroughUnmatchedMessages)
-                    //{
-                    //    throw new InvalidOperationException($"Topic name `{address}` could not be matched against any of the configured routes.");
-                    //}
+                    byte[] dest = new byte[clientMessage.Payload.ReadableBytes];
+                    clientMessage.Payload.ReadBytes(dest);
+                    
+                    //string dump = ByteBufferUtil.PrettyHexDump(clientMessage.Payload);
 
-                    CommonEventSource.Log.Warning("Topic name could not be matched against any of the configured routes. Falling back to default telemetry settings.", address);
-                    message.Properties[this.settings.ServicePropertyPrefix + MessagePropertyNames.Unmatched] = bool.TrueString;
-                    message.Properties[this.settings.ServicePropertyPrefix + MessagePropertyNames.Subject] = address;
+                    //ReadBytes(byte[] destination)
+
+                    await this.storageProvider.SendEventAsync(clientMessage.Id, clientMessage.Address, deviceId, dest); //TODO: Extend with other properties if needed
                 }
-                Message iotHubMessage = clientMessage.ToMessage();
-
-                //await this.deviceClient.SendEventAsync(iotHubMessage);
                 //await insert message in storage (SQL table, tablestore,++)
                 
 
             }
-            catch (IotHubException ex)
+            catch (Exception ex)
             {
                 throw ComposeStorageCommunicationException(ex);
             }
@@ -165,35 +184,22 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.StorageClient
             Message message = null;
             IByteBuffer messagePayload = null;
 
-            //DEBUG
-            int cnt = 1;
-            byte[] byteMsg = Encoding.ASCII.GetBytes("HelloThere"); //DEBUG
-            //
+            byte[] msgBody;
 
             try
             {
                 while (true)
                 {
-                    //message = await storage lookup messge -this.deviceClient.ReceiveAsync(TimeSpan.MaxValue);
+                    msgBody = await this.storageProvider.ReceiveAsync(TimeSpan.MaxValue);
                     //message = await this.deviceClient.ReceiveAsync(TimeSpan.MaxValue);                    
-
-                    if (cnt > 0)
-                    {
-                        message = new Message(byteMsg);
-                        cnt--;
-                    }
-                    else
-                    {
-                        await System.Threading.Tasks.Task.Delay(1000 * 60 * 5);
-                        message = null;
-                    }
-
+                    message = new Message(msgBody);
 
                     if (message == null)
                     {
                         this.messagingChannel.Close(null);
                         return;
                     }
+                   
 
                     if (this.settings.MaxOutboundRetransmissionEnforced && message.DeliveryCount > this.settings.MaxOutboundRetransmissionCount)
                     {
@@ -220,6 +226,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.StorageClient
                     var msg = new StorageClientMessage(message, messagePayload);
                     msg.Properties[TemplateParameters.DeviceIdTemplateParam] = this.deviceId;
                     string address = "";
+
                     //if (!this.messageAddressConverter.TryDeriveAddress(msg, out address))
                     //{
                     //    messagePayload.Release();
@@ -227,8 +234,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.StorageClient
                     //    message.Dispose();
                     //    continue;
                     //}
-                    msg.Address = address;
-
+                    msg.Address = this.deviceId; // address;
+                    
                     this.messagingChannel.Handle(msg);
 
                     message = null; // ownership has been transferred to messagingChannel
@@ -257,8 +264,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.StorageClient
         {
             try
             {
-                //await this.deviceClient.AbandonAsync(messageId);
-                //TODO: Implement Abandon
+                await this.storageProvider.AbandonAsync(messageId);                
             }
             catch (IotHubException ex)
             {
@@ -270,8 +276,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.StorageClient
         {
             try
             {
-                //await this.deviceClient.CompleteAsync(messageId);
-                // TODO: Implement Complete
+                await this.storageProvider.CompleteAsync(messageId);
             }
             catch (IotHubException ex)
             {
@@ -283,8 +288,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.StorageClient
         {
             try
             {
-                //await this.deviceClient.RejectAsync(messageId);
-                // TODO: Implement Reject
+                await this.storageProvider.RejectAsync(messageId);
             }
             catch (IotHubException ex)
             {
@@ -296,10 +300,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.StorageClient
         {
             try
             {
-                //await this.deviceClient.CloseAsync();
-                // TODO: Implement DisposeAsync
+                await this.storageProvider.CloseAsync();
             }
-            catch (IotHubException ex)
+            catch (Exception ex)
             {
                 throw ComposeStorageCommunicationException(ex);
             }
@@ -337,9 +340,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.StorageClient
         //    }
         //}
 
-        static MessagingException ComposeStorageCommunicationException(IotHubException ex)
+        static MessagingException ComposeStorageCommunicationException(Exception ex)
         {
-            return new MessagingException(ex.Message, ex.InnerException, ex.IsTransient, ex.TrackingId);
+            return new MessagingException(ex.Message, ex.InnerException);
         }
     }
 }
